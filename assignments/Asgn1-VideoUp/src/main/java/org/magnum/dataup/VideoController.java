@@ -23,15 +23,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
-import retrofit.client.Response;
-import retrofit.http.Path;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collection;
 
+import static org.magnum.dataup.VideoSvcApi.*;
+
 @Controller
-public class VideoController implements VideoSvcApi {
+public class VideoController {
 
 	/**
 	 * You will need to create one or more Spring controllers to fulfill the
@@ -65,21 +69,22 @@ public class VideoController implements VideoSvcApi {
         videoFileManager = VideoFileManager.get();
     }
 
-    @Override
-    @RequestMapping(value=VIDEO_SVC_PATH, method= RequestMethod.GET)
+    @RequestMapping(value= VIDEO_SVC_PATH, method= RequestMethod.GET)
     public @ResponseBody Collection<Video> getVideoList() {
         return videoRepository.getVideos();
     }
 
-    @Override
-    @RequestMapping(value=VIDEO_SVC_PATH, method= RequestMethod.POST)
+    @RequestMapping(value= VIDEO_SVC_PATH, method= RequestMethod.POST)
     public @ResponseBody Video addVideo(@RequestBody Video v) {
+        videoRepository.save(v);
+        String dataUrl = String.format("%s/video/%d/data", getUrlBaseForLocalServer(), v.getId());
+        v.setDataUrl(dataUrl);
         videoRepository.save(v);
         return v;
     }
 
-    @RequestMapping(value=VIDEO_DATA_PATH, method= RequestMethod.POST)
-    public @ResponseBody VideoStatus setVideoData(@RequestParam(ID_PARAMETER) long id, @RequestParam(DATA_PARAMETER) MultipartFile videoData)
+    @RequestMapping(value=VideoSvcApi.VIDEO_DATA_PATH, method= RequestMethod.POST)
+    public @ResponseBody VideoStatus setVideoData(@PathVariable(ID_PARAMETER) Long id, @RequestParam(DATA_PARAMETER) MultipartFile videoData)
             throws IOException {
         if (!videoData.isEmpty()) {
             Video videoWithId = videoRepository.getVideoWithId(id);
@@ -91,15 +96,23 @@ public class VideoController implements VideoSvcApi {
         return null;
     }
 
-    @Override
     @RequestMapping(value=VIDEO_DATA_PATH, method= RequestMethod.GET)
-    public Response getData(@Path(ID_PARAMETER) long id) {
-        Video videoWithId = videoRepository.getVideoWithId(id);
-        if( videoWithId == null)  throw new RequestNotFoundException();
-        return ;
+    public void getData(@PathVariable(ID_PARAMETER) Long id, HttpServletResponse response) throws IOException {
+        Video videoWithId = videoRepository.getVideoWithId( id );
+        if( videoWithId == null || !videoFileManager.hasVideoData(videoWithId))  throw new RequestNotFoundException();
+
+        response.setContentType(videoWithId.getContentType());
+        videoFileManager.copyVideoData(videoWithId, response.getOutputStream());
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     private class RequestNotFoundException extends RuntimeException {
+    }
+
+    private String getUrlBaseForLocalServer() {
+        HttpServletRequest request =
+                ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        return "http://"+request.getServerName()
+                + ((request.getServerPort() != 80) ? ":"+request.getServerPort() : "");
     }
 }
