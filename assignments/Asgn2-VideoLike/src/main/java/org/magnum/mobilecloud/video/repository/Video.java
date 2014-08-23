@@ -1,6 +1,12 @@
 package org.magnum.mobilecloud.video.repository;
 
 import com.google.common.base.Objects;
+import org.codehaus.jackson.annotate.JsonIgnore;
+
+import javax.persistence.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A simple object to represent a video and its URL for viewing.
@@ -16,15 +22,26 @@ import com.google.common.base.Objects;
  * 
  * @author mitchell
  */
+@Entity
 public class Video {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
 	private long id;
 
 	private String name;
 	private String url;
 	private long duration;
 	private long likes;
-	
+
+    @ElementCollection
+    @CollectionTable(
+            name="VIDEO_USERS",
+            joinColumns=@JoinColumn(name="VIDEO_ID")
+    )
+    @JsonIgnore
+    private Set<String> usernames;
+
 	public Video() {
 	}
 
@@ -75,8 +92,47 @@ public class Video {
 	public void setLikes(long likes) {
 		this.likes = likes;
 	}
-	
-	/**
+
+    public void incrementLikes() {
+        this.likes++;
+    }
+
+    public void decrementLikes() {
+        this.likes--;
+    }
+
+    public Set getUsernames() {
+        return usernames == null ? Collections.EMPTY_SET : usernames;
+    }
+
+    public void setUsernames(Set<String> usernames) {
+        this.usernames = usernames;
+    }
+
+    public boolean addUsername(String username) {
+        if (usernames == null) {
+            usernames = new HashSet<>();
+        }
+
+        if (usernames.contains(username)) {
+            return false;
+        }
+
+        usernames.add(username);
+        return true;
+    }
+
+    public boolean removeUsername(String userName) {
+        if(usernames == null || !usernames.contains(userName)) {
+            return false;
+        }
+
+        usernames.remove(userName);
+
+        return true;
+    }
+
+    /**
 	 * Two Videos will generate the same hashcode if they have exactly the same
 	 * values for their name, url, and duration.
 	 * 
@@ -104,5 +160,4 @@ public class Video {
 			return false;
 		}
 	}
-
 }

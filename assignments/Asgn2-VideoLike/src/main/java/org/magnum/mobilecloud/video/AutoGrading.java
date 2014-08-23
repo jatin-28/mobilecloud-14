@@ -18,9 +18,6 @@
 package org.magnum.mobilecloud.video;
 
 import io.magnum.autograder.HandinUtil;
-
-import java.io.File;
-
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -28,7 +25,8 @@ import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.message.BasicHttpRequest;
 import org.magnum.mobilecloud.integration.test.InternalAutoGradingTest;
-import org.magnum.mobilecloud.integration.test.UnsafeHttpsClient;
+
+import java.io.File;
 
 /**
  * This class allows you to estimate the score for your solution before handing it in.

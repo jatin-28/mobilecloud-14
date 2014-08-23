@@ -1,9 +1,8 @@
 package org.magnum.mobilecloud.video;
 
-import java.io.File;
-
 import org.apache.catalina.connector.Connector;
 import org.apache.coyote.http11.Http11NioProtocol;
+import org.magnum.mobilecloud.video.auth.OAuth2SecurityConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -14,8 +13,11 @@ import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletCon
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.rest.webmvc.config.RepositoryRestMvcConfiguration;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+
+import java.io.File;
 
 //Tell Spring to automatically inject any dependencies that are marked in
 //our classes with @Autowired
@@ -31,6 +33,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 // Any class in this package that is annotated with @Controller is going to be
 // automatically discovered and connected to the DispatcherServlet.
 @ComponentScan
+@Import(OAuth2SecurityConfiguration.class)
 public class Application extends RepositoryRestMvcConfiguration {
 
 	// The app now requires that you pass the location of the keystore and
